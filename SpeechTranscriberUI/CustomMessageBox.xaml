@@ -1,0 +1,46 @@
+﻿<Window x:Class="SpeechTranscriberUI.CustomMessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SpeechTranscriberUI"
+        Title="" 
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent">
+    <Border BorderThickness="1" BorderBrush="Gray" CornerRadius="10" Background="White" Padding="0" 
+            SnapsToDevicePixels="True">
+        <StackPanel>
+            <!-- Title -->
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <TextBlock Text="{Binding TitleText}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Separator -->
+            <Separator Margin="10,5"/>
+
+            <!-- Icon and Message -->
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <Image Width="32" Height="32" Source="{Binding IconMy}" Margin="0,0,10,0"/>
+                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
+                <Button Content="OK" Width="75" Margin="5" 
+                        Visibility="{Binding IsOKVisible}" 
+                        Command="{Binding OKCommand}" />
+                <Button Content="Cancel" Width="75" Margin="5" 
+                        Visibility="{Binding IsCancelVisible}" 
+                        Command="{Binding CancelCommand}" />
+                <Button Content="Yes" Width="75" Margin="5" 
+                        Visibility="{Binding IsYesVisible}" 
+                        Command="{Binding YesCommand}" />
+                <Button Content="No" Width="75" Margin="5" 
+                        Visibility="{Binding IsNoVisible}" 
+                        Command="{Binding NoCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

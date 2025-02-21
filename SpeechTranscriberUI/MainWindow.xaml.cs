@@ -7,6 +7,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Xml.Serialization;
 using SpeechTranscriber;
 using static System.Windows.Forms.AxHost;
 
@@ -108,9 +109,9 @@ public partial class MainWindow : Window
     }
 
     // Event for the form loaded
-    private async void OnFormLoaded(object sender, RoutedEventArgs e)
+    private void OnFormLoaded(object sender, RoutedEventArgs e)
     {
-        await StartTranscription();
+        StartTranscription();
     }
 
     // Event for the form closing
@@ -120,8 +121,7 @@ public partial class MainWindow : Window
         var result = CustomMessageBoxHelper.Show(this, "Are you sure you want to exit?", "Exit Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (result == MessageBoxResult.Yes)
         {
-            if (speechProcessor != null)
-                speechProcessor.StopRecognition();
+            StopTranscription();
 
             // Save the last window position to the registry
             RegistryHelper.WriteAppInfo("WINDOWLEFT", this.Left.ToString());
@@ -136,17 +136,17 @@ public partial class MainWindow : Window
         // Instantiate the ConfigurationWindow
         ConfigurationWindow configWindow = new ConfigurationWindow();
 
-        // Optional: Set the owner to the main window
+        // Set the owner to the main window
         configWindow.Owner = this;
+
+        // Stop Transcription
+        StopTranscription();
 
         // Show the ConfigurationWindow as a dialog
         bool? result = configWindow.ShowDialog();
 
-        if (result == true)
-        {
-            // Optional: Handle any post-configuration actions if needed
-            CustomMessageBoxHelper.Show(this, "Configuration updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        // Restart Transcription
+        StartTranscription();
     }
 
     // Event handler for the Summarize menu item
@@ -181,10 +181,10 @@ public partial class MainWindow : Window
     }
 
     // Start Transcription
-    private static bool started = false;
-    public async Task StartTranscription()
+    private static bool transcriptionStarted = false;
+    private void StartTranscription()
     {
-        if (started)
+        if (transcriptionStarted)
             return;
 
         var configured = RegistryHelper.ReadAppInfo("CONFIGURED");
@@ -269,14 +269,6 @@ public partial class MainWindow : Window
 
                     // Clear the transcribing text
                     txtTranscribing.Clear();
-
-                    // Check if the transcribed text matches the stop phrase and it came from the local Microphone
-                    if (speakerId.Substring(0, 1) == "M" && text.Trim().ToLower().StartsWith("stop transcri"))
-                    {
-                        txtTranscribing.AppendText("Stop phrase detected. Stopping transcription...\n");
-                        txtTranscribing.ScrollToEnd();
-                        this.Close();
-                    }
                 }
                 else
                 {
@@ -309,8 +301,6 @@ public partial class MainWindow : Window
 
         try
         {
-            started = true;
-
             // Start both FromMic and FromSpeaker awaiting on them
 
             Task micTask = speechProcessor.FromMic(
@@ -327,20 +317,20 @@ public partial class MainWindow : Window
                 onSessionStopped
             );
 
-            await Task.WhenAny(micTask, speakerTask);
-
-            // Shutdown the application
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                Application.Current.Shutdown();
-            });
-
-            started = false;
+            transcriptionStarted = true;
         }
 
         catch (Exception ex)
         {
             CustomMessageBoxHelper.Show(this, $"An error occurred during transcription: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private void StopTranscription()
+    {
+        if (speechProcessor != null)
+            speechProcessor.StopRecognition();
+
+        transcriptionStarted = false;
     }
 }

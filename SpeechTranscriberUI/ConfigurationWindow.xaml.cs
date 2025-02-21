@@ -49,21 +49,18 @@ public partial class ConfigurationWindow : Window
         RegistryHelper.WriteAppInfo("DEPLOYMENT", txtDeployment.Text);
         RegistryHelper.WriteAppInfo("CONFIGURED", "YES");
 
-        // Use Dispatcher to update UI elements from a non-UI thread
-        Dispatcher.InvokeAsync(async () =>
-        {
-            if (this.Owner is MainWindow parent)
-                await parent.StartTranscription();
-        });
-
         CustomMessageBoxHelper.Show(this, "Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        this.Close();
+
+        // Set DialogResult to true to indicate success
+        this.DialogResult = true;
+
     }
 
     // Cancel button click event handler
     private void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        // Close the window without saving
+        // Set DialogResult to false to indicate cancellation
+        this.DialogResult = false;
         this.Close();
     }
 }

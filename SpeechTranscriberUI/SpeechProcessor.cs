@@ -20,7 +20,7 @@ public class SpeechProcessor
     public delegate void SessionStoppedHandler(string message);
 
     // TaskCompletionSource to manage task completion
-    private TaskCompletionSource<int> stopRecognition = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+    private TaskCompletionSource<int> stopAllRecognition = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
 
     // SpeechConfig instance
     private SpeechConfig? speechConfig = null;
@@ -36,7 +36,7 @@ public class SpeechProcessor
     // Method to stop recognition externally
     public void StopRecognition()
     {
-        stopRecognition.TrySetResult(0);
+        stopAllRecognition.TrySetResult(0);
     }
 
     // FromMic method
@@ -90,24 +90,24 @@ public class SpeechProcessor
                     {
                         onCanceled?.Invoke($"CANCELED: ErrorCode={e.ErrorCode}");
                         onCanceled?.Invoke($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                        stopRecognition.TrySetResult(0);
+                        stopAllRecognition.TrySetResult(0);
                     }
 
-                    stopRecognition.TrySetResult(0);
+                    stopAllRecognition.TrySetResult(0);
                 };
 
                 // Event handler for session stopped
                 conversationTranscriber.SessionStopped += (s, e) =>
                 {
                     onSessionStopped?.Invoke("Session stopped event.");
-                    stopRecognition.TrySetResult(0);
+                    stopAllRecognition.TrySetResult(0);
                 };
 
                 // Start transcribing
                 await conversationTranscriber.StartTranscribingAsync();
 
                 // Waits for completion. Use Task.WhenAny to keep the task rooted.
-                await Task.WhenAny(stopRecognition.Task);
+                await Task.WhenAny(stopAllRecognition.Task);
 
                 // Stop transcribing
                 await conversationTranscriber.StopTranscribingAsync();
@@ -143,7 +143,6 @@ public class SpeechProcessor
         using var audioConfigStream = AudioInputStream.CreatePushStream();
         using var audioConfig = AudioConfig.FromStreamInput(audioConfigStream);
         using var conversationTranscriber = new ConversationTranscriber(speechConfig, audioConfig);
-        var stopRecognition = new TaskCompletionSource<int>();
 
         // NAudio Capture Events
         capture.DataAvailable += (s, a) =>
@@ -228,17 +227,17 @@ public class SpeechProcessor
             {
                 onCanceled?.Invoke($"CANCELED: ErrorCode={e.ErrorCode}");
                 onCanceled?.Invoke($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                stopRecognition.TrySetResult(0);
+                stopAllRecognition.TrySetResult(0);
             }
 
-            stopRecognition.TrySetResult(0);
+            stopAllRecognition.TrySetResult(0);
         };
 
         // Event handler for session stopped
         conversationTranscriber.SessionStopped += (s, e) =>
         {
             onSessionStopped?.Invoke("Session stopped event.");
-            stopRecognition.TrySetResult(0);
+            stopAllRecognition.TrySetResult(0);
         };
 
         // Start transcribing
@@ -247,7 +246,7 @@ public class SpeechProcessor
         capture.StartRecording();
 
         // Waits for completion. Use Task.WhenAny to keep the task rooted.
-        await Task.WhenAny(stopRecognition.Task);
+        await Task.WhenAny(stopAllRecognition.Task);
 
         await conversationTranscriber.StopTranscribingAsync();
 

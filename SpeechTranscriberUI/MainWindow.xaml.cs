@@ -50,7 +50,46 @@ public partial class MainWindow : Window
         }
     }
 
-    // Update the ExitMenuItem_Click method to handle the tasks correctly
+    // Add Key Binding for the Hotkey (Ctrl+Shift+C)
+    protected override void OnInitialized(EventArgs e)
+    {
+        base.OnInitialized(e);
+
+        // Create a key binding for Ctrl+Shift+C to trigger the CopyAllMenuItem_Click
+        var copyAllCommand = new RoutedCommand();
+        copyAllCommand.InputGestures.Add(new System.Windows.Input.KeyGesture(System.Windows.Input.Key.C, System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift));
+
+        this.CommandBindings.Add(new CommandBinding(copyAllCommand, CopyAllMenuItem_Click));
+
+        // Assign the command to the menu item
+        var copyAllMenuItem = (MenuItem)this.FindName("Copy All");
+        // Alternatively, you can set the Command property in XAML
+    }
+ 
+    // Event for the form loaded
+    private void OnFormLoaded(object sender, RoutedEventArgs e)
+    {
+        StartTranscription();
+    }
+
+    // Event for the form closing
+    private void OnFormClosing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Confirm before exiting (optional)
+        var result = CustomMessageBoxHelper.Show(this, "Are you sure you want to exit?", "Exit Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+            StopTranscription();
+
+            // Save the last window position to the registry
+            RegistryHelper.WriteAppInfo("WINDOWLEFT", this.Left.ToString());
+            RegistryHelper.WriteAppInfo("WINDOWTOP", this.Top.ToString());
+        }
+        else
+            e.Cancel = true;
+    }
+
+    // Exit Menu Item Click Event Handler
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
     {
         this.Close();
@@ -90,45 +129,6 @@ public partial class MainWindow : Window
             // Handle potential errors
             CustomMessageBoxHelper.Show(this, $"Failed to copy text to clipboard: {ex.Message}", "Copy Failed", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    // Add Key Binding for the Hotkey (Ctrl+Shift+C)
-    protected override void OnInitialized(EventArgs e)
-    {
-        base.OnInitialized(e);
-
-        // Create a key binding for Ctrl+Shift+C to trigger the CopyAllMenuItem_Click
-        var copyAllCommand = new RoutedCommand();
-        copyAllCommand.InputGestures.Add(new System.Windows.Input.KeyGesture(System.Windows.Input.Key.C, System.Windows.Input.ModifierKeys.Control | System.Windows.Input.ModifierKeys.Shift));
-
-        this.CommandBindings.Add(new CommandBinding(copyAllCommand, CopyAllMenuItem_Click));
-
-        // Assign the command to the menu item
-        var copyAllMenuItem = (MenuItem)this.FindName("Copy All");
-        // Alternatively, you can set the Command property in XAML
-    }
-
-    // Event for the form loaded
-    private void OnFormLoaded(object sender, RoutedEventArgs e)
-    {
-        StartTranscription();
-    }
-
-    // Event for the form closing
-    private void OnFormClosing(object sender, System.ComponentModel.CancelEventArgs e)
-    {
-        // Confirm before exiting (optional)
-        var result = CustomMessageBoxHelper.Show(this, "Are you sure you want to exit?", "Exit Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (result == MessageBoxResult.Yes)
-        {
-            StopTranscription();
-
-            // Save the last window position to the registry
-            RegistryHelper.WriteAppInfo("WINDOWLEFT", this.Left.ToString());
-            RegistryHelper.WriteAppInfo("WINDOWTOP", this.Top.ToString());
-        }
-        else
-            e.Cancel = true;
     }
 
     private void ConfigurationMenuItem_Click(object sender, RoutedEventArgs e)
@@ -294,11 +294,6 @@ public partial class MainWindow : Window
         {
         };
 
-        // Start Up Message
-        txtTranscribing.AppendText("Starting transcription. Speak into your microphone...\n");
-        txtTranscribing.AppendText("Say 'STOP TRANSCRIPTION' to end the session.\n");
-        txtTranscribing.ScrollToEnd();
-
         try
         {
             // Start both FromMic and FromSpeaker awaiting on them
@@ -318,6 +313,11 @@ public partial class MainWindow : Window
             );
 
             transcriptionStarted = true;
+
+            // Start Up Message
+            txtTranscribing.AppendText("Transcription started.\n");
+            txtTranscribing.ScrollToEnd();
+
         }
 
         catch (Exception ex)
@@ -326,6 +326,7 @@ public partial class MainWindow : Window
         }
     }
 
+    // Stop Transcription
     private void StopTranscription()
     {
         if (speechProcessor != null)

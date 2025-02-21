@@ -39,9 +39,4 @@
     <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.42.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Icon1.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
 </Project>

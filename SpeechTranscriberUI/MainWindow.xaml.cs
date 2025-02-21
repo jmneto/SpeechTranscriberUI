@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using SpeechTranscriber;
+using static System.Windows.Forms.AxHost;
 
 namespace SpeechTranscriberUI;
 public partial class MainWindow : Window
@@ -112,9 +113,80 @@ public partial class MainWindow : Window
         await StartTranscription();
     }
 
+    // Event for the form closing
+    private void OnFormClosing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // Confirm before exiting (optional)
+        var result = CustomMessageBoxHelper.Show(this, "Are you sure you want to exit?", "Exit Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
+        {
+            if (speechProcessor != null)
+                speechProcessor.StopRecognition();
+
+            // Save the last window position to the registry
+            RegistryHelper.WriteAppInfo("WINDOWLEFT", this.Left.ToString());
+            RegistryHelper.WriteAppInfo("WINDOWTOP", this.Top.ToString());
+        }
+        else
+            e.Cancel = true;
+    }
+
+    private void ConfigurationMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        // Instantiate the ConfigurationWindow
+        ConfigurationWindow configWindow = new ConfigurationWindow();
+
+        // Optional: Set the owner to the main window
+        configWindow.Owner = this;
+
+        // Show the ConfigurationWindow as a dialog
+        bool? result = configWindow.ShowDialog();
+
+        if (result == true)
+        {
+            // Optional: Handle any post-configuration actions if needed
+            CustomMessageBoxHelper.Show(this, "Configuration updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    // Event handler for the Summarize menu item
+    private void SummarizeMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        SummarizeMenuItem.IsEnabled = false;
+
+        var apiendpoint = RegistryHelper.ReadAppInfo("APIENDPOINT");
+        var apikey = RegistryHelper.ReadAppInfo("APIKEY");
+        var deployment = RegistryHelper.ReadAppInfo("DEPLOYMENT");
+
+        if (string.IsNullOrEmpty(apiendpoint) || string.IsNullOrEmpty(apikey) || string.IsNullOrEmpty(deployment))
+        {
+            CustomMessageBoxHelper.Show(this, "API Endpoint, Key, and Deployment must be set in configuration.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var textTosummarize = txtTranscribed.Text;
+
+        Task.Run(() =>
+        {
+            var result = AITextSummarizer.SummarizeText(apiendpoint, apikey, deployment, textTosummarize);
+            Dispatcher.Invoke(() =>
+            {
+                txtTranscribed.AppendText($"\n\n<SUMMARY>\n{result}\n</SUMMARY>\n");
+                lastTranscribedSpeakerId = string.Empty;
+                txtTranscribed.ScrollToEnd();
+
+                SummarizeMenuItem.IsEnabled = true;
+            });
+        });
+    }
+
     // Start Transcription
+    private static bool started = false;
     public async Task StartTranscription()
     {
+        if (started)
+            return;
+
         var configured = RegistryHelper.ReadAppInfo("CONFIGURED");
         if (string.IsNullOrEmpty(configured))
         {
@@ -237,6 +309,8 @@ public partial class MainWindow : Window
 
         try
         {
+            started = true;
+
             // Start both FromMic and FromSpeaker awaiting on them
 
             Task micTask = speechProcessor.FromMic(
@@ -260,78 +334,13 @@ public partial class MainWindow : Window
             {
                 Application.Current.Shutdown();
             });
+
+            started = false;
         }
 
         catch (Exception ex)
         {
             CustomMessageBoxHelper.Show(this, $"An error occurred during transcription: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-    }
-
-    // Event for the form closing
-    private void OnFormClosing(object sender, System.ComponentModel.CancelEventArgs e)
-    {
-        // Confirm before exiting (optional)
-        var result = CustomMessageBoxHelper.Show(this, "Are you sure you want to exit?", "Exit Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Question);
-        if (result == MessageBoxResult.Yes)
-        {
-            if (speechProcessor != null)
-                speechProcessor.StopRecognition();
-
-            // Save the last window position to the registry
-            RegistryHelper.WriteAppInfo("WINDOWLEFT", this.Left.ToString());
-            RegistryHelper.WriteAppInfo("WINDOWTOP", this.Top.ToString());
-        }
-        else
-            e.Cancel = true;
-    }
-
-    private void ConfigurationMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Instantiate the ConfigurationWindow
-        ConfigurationWindow configWindow = new ConfigurationWindow();
-
-        // Optional: Set the owner to the main window
-        configWindow.Owner = this;
-
-        // Show the ConfigurationWindow as a dialog
-        bool? result = configWindow.ShowDialog();
-
-        if (result == true)
-        {
-            // Optional: Handle any post-configuration actions if needed
-            CustomMessageBoxHelper.Show(this, "Configuration updated successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-    }
-
-    // Event handler for the Summarize menu item
-    private void SummarizeMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        SummarizeMenuItem.IsEnabled = false;
-
-        var apiendpoint = RegistryHelper.ReadAppInfo("APIENDPOINT");
-        var apikey = RegistryHelper.ReadAppInfo("APIKEY");
-        var deployment = RegistryHelper.ReadAppInfo("DEPLOYMENT");
-
-        if (string.IsNullOrEmpty(apiendpoint) || string.IsNullOrEmpty(apikey) || string.IsNullOrEmpty(deployment))
-        {
-            CustomMessageBoxHelper.Show(this, "API Endpoint, Key, and Deployment must be set in configuration.", "Configuration Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            return;
-        }
-
-        var textTosummarize = txtTranscribed.Text;
-
-        Task.Run(() =>
-        {
-            var result = AITextSummarizer.SummarizeText(apiendpoint, apikey, deployment, textTosummarize);
-            Dispatcher.Invoke(() =>
-            {
-                txtTranscribed.AppendText($"\n\n<SUMMARY>\n{result}\n</SUMMARY>\n");
-                lastTranscribedSpeakerId = string.Empty;
-                txtTranscribed.ScrollToEnd();
-
-                SummarizeMenuItem.IsEnabled = true;
-            });
-        });
     }
 }

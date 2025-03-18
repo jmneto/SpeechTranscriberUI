@@ -1,57 +1,30 @@
-﻿<Window x:Class="SpeechTranscriberUI.MainWindow"
+﻿<Window x:Class="SpeechTranscriberUI.AskAiWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpeechTranscriberUI"
         mc:Ignorable="d"
-       Title="Speech Transcriber" 
-       Height="540" 
-       Width="800" 
-       MinHeight="540" 
-       MinWidth="800" 
-       FontSize="14" 
-       Loaded="OnFormLoaded"
-       Closing="OnFormClosing"
-       Icon="\Icon1.ico"
-       Topmost="False">
-    <Grid Margin="0,0,0,0">
+        Title="Ask AI" Height="400" Width="500">
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" Name="Menu"/>
             <RowDefinition Height="*" MinHeight="150" Name="topRow"/>
             <RowDefinition Height="Auto" Name="splitterRow"/>
             <RowDefinition Height="150" MinHeight="150" Name="bottomRow"/>
         </Grid.RowDefinitions>
 
-        <!-- Menu -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Copy All" InputGestureText="Ctrl+Shift+C" Click="CopyAllMenuItem_Click"/>
-                <MenuItem Header="_Summarize" Click="SummarizeMenuItem_Click" Name="SummarizeMenuItem"/>
-                <Separator/>
-                <MenuItem Header="Ask _AI" Click="AskAIMenuItem_Click" Name="AskAIMenuItem"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
-            </MenuItem>
-            <MenuItem Header="_Options">
-                <MenuItem x:Name="ToggleTopmostMenuItem" Header="Topmost" IsCheckable="True" Click="ToggleTopmostMenuItem_Click"/>
-                <Separator/>
-                <MenuItem Header="_Configuration" Click="ConfigurationMenuItem_Click"/>
-            </MenuItem>
-        </Menu>
-
         <!-- Content -->
-        <Border Grid.Row="1" Background="#FFCBE0CC" Name="topArea">
+        <Border Grid.Row="0" Background="#FF66A6BB" Name="topArea">
             <Grid x:Name="gridcompletion" Visibility="Visible">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Label x:Name="lblCompletion" Content="Transcript" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="SemiBold" Grid.Row="0"/>
-                <TextBox x:Name="txtTranscribed" 
+                <Label x:Name="lblCompletion" Content="Result" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="SemiBold" Grid.Row="0"/>
+                <TextBox x:Name="txtCompletion" 
                    IsReadOnly="True"
                    ScrollViewer.VerticalScrollBarVisibility="Auto" 
                    ScrollViewer.HorizontalScrollBarVisibility="Auto" 
@@ -65,11 +38,11 @@
             </Grid>
         </Border>
 
-        <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch"
+        <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch"
                      VerticalAlignment="Top" Background="Black" ResizeBehavior="PreviousAndNext"
                      ResizeDirection="Rows"/>
 
-        <Border Grid.Row="3" Background="#FFCBE0CC" Name="bottomArea">
+        <Border Background="#FF66A6BB" Grid.Row="2" Name="bottomArea">
             <Grid x:Name="gridprompt" Visibility="Visible">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -78,22 +51,26 @@
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="150" />
                 </Grid.ColumnDefinitions>
 
-                <Label x:Name="lblPrompt" Content="Transcribing" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="SemiBold" Grid.Row="0" Grid.Column="0"/>
-                <TextBox x:Name="txtTranscribing" 
-                   IsReadOnly="True"
+                <Label x:Name="lblPrompt" Content="Prompt" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="SemiBold" Grid.Row="0" Grid.Column="0"/>
+                <TextBox x:Name="txtPrompt" 
                    ScrollViewer.VerticalScrollBarVisibility="Auto" 
                    ScrollViewer.HorizontalScrollBarVisibility="Auto" 
                    TextWrapping="Wrap" 
                    AcceptsReturn="True" 
-                   AcceptsTab="false" 
+                   AcceptsTab="True" 
                    VerticalScrollBarVisibility="Auto"
                    HorizontalScrollBarVisibility="Auto"
                    TabIndex="5"
                    Grid.Row="1"
-                   Grid.Column="0" Grid.ColumnSpan="2"/>
-                <StackPanel Grid.Row="1" Grid.Column="1"/>
+                   Grid.Column="0"
+                   VerticalAlignment="Stretch"></TextBox>
+                <StackPanel Grid.Row="1" Grid.Column="1">
+                    <Button x:Name="btnSend" Content="Send (alt+enter)"  TabIndex="6" IsEnabled="True" IsDefault="True" Click="btnSend_Click" FontWeight="Bold" Grid.Row="1" Grid.Column="1" Height="60"/>
+                    <Button x:Name="btnClearCtx" Content="Clear Result" TabIndex="7" IsEnabled="True" Click="btnClearCtx_Click" Grid.Row="1" Grid.Column="1" Height="60"/>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

@@ -29,12 +29,14 @@
             <!-- Buttons -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="10">
                 <Button Content="OK" Width="75" Margin="5" 
+                        IsDefault="True"
                         Visibility="{Binding IsOKVisible}" 
                         Command="{Binding OKCommand}" />
                 <Button Content="Cancel" Width="75" Margin="5" 
                         Visibility="{Binding IsCancelVisible}" 
                         Command="{Binding CancelCommand}" />
                 <Button Content="Yes" Width="75" Margin="5" 
+                        IsDefault="True"
                         Visibility="{Binding IsYesVisible}" 
                         Command="{Binding YesCommand}" />
                 <Button Content="No" Width="75" Margin="5" 

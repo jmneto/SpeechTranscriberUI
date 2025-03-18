@@ -7,9 +7,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Xml.Serialization;
 using SpeechTranscriber;
-using static System.Windows.Forms.AxHost;
 
 namespace SpeechTranscriberUI;
 public partial class MainWindow : Window
@@ -276,7 +274,7 @@ public partial class MainWindow : Window
                     txtTranscribing.ScrollToEnd();
                 }
             });
-        };
+        };     
 
         // Canceled Handler
         SpeechProcessor.CanceledHandler onCanceled = (message) =>
@@ -333,5 +331,21 @@ public partial class MainWindow : Window
             speechProcessor.StopRecognition();
 
         transcriptionStarted = false;
+    }
+
+    // Event handler for the Ask AI menu item
+    private void AskAIMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        // Add code here to open the AskAiWindow
+        AskAiWindow askAiWindow = new AskAiWindow();
+        askAiWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        askAiWindow.Owner = this; // Set the owner to the main window
+        askAiWindow.ShowDialog(); // Show the AskAiWindow as a dialog
+    }
+
+    // Method to get the transcribed text
+    public string GetTranscribedText()
+    { 
+        return txtTranscribed.Text;
     }
 }

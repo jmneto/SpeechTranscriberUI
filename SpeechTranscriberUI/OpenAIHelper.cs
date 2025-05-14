@@ -29,7 +29,7 @@ public class AITextSummarizer
             var chatClient = client.GetChatClient(deployment);
 
             // Prepare the prompt for summarization
-            string prompt = $"Create a summary of this conversation below. If possible create a conclusion statement and next steps. \nConversation:\n\n{textToSummarize}";
+            string prompt = $"Create a summary list of bullet points for this conversation below based only on facts from the conversation.\n\nConversation:\n\n{textToSummarize}";
 
             ChatCompletion completion = chatClient.CompleteChat(
                         [
@@ -73,7 +73,7 @@ public class AIGenericPrompt
             var chatClient = client.GetChatClient(deployment);
 
             // Prepare the prompt for summarization
-            string finalPrompt = $"Answer this prompt:[{prompt}]\n\nBase your answer on this conversation:\n\n[{text}]\n\nUse this information as previous context for this AI interaction:\n\n[{context}]";
+            string finalPrompt = $"Answer this prompt:[{prompt}]\n\nUse your knowledge base for augmentation, but strictly base your answer on this conversation:\n\n[{text}]\n\nAlso use this information as previous context for this AI interaction:\n\n[{context}]";
 
             ChatCompletion completion = chatClient.CompleteChat(
                         [

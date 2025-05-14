@@ -84,10 +84,13 @@ public class SpeechProcessor
                 conversationTranscriber.Canceled += (s, e) =>
                 {
                     string message = $"CANCELED: Reason={e.Reason}";
+                    Logger.Log(message);
                     onCanceled?.Invoke(message);
 
                     if (e.Reason == CancellationReason.Error)
                     {
+                        Logger.Log($"CANCELED: ErrorCode={e.ErrorCode}");
+                        Logger.Log($"CANCELED: ErrorDetails={e.ErrorDetails}");
                         onCanceled?.Invoke($"CANCELED: ErrorCode={e.ErrorCode}");
                         onCanceled?.Invoke($"CANCELED: ErrorDetails={e.ErrorDetails}");
                         stopAllRecognition.TrySetResult(0);
@@ -95,6 +98,7 @@ public class SpeechProcessor
 
                     stopAllRecognition.TrySetResult(0);
                 };
+
 
                 // Event handler for session stopped
                 conversationTranscriber.SessionStopped += (s, e) =>

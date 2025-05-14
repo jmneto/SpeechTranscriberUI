@@ -63,7 +63,7 @@ public partial class MainWindow : Window
         var copyAllMenuItem = (MenuItem)this.FindName("Copy All");
         // Alternatively, you can set the Command property in XAML
     }
- 
+
     // Event for the form loaded
     private void OnFormLoaded(object sender, RoutedEventArgs e)
     {
@@ -178,6 +178,16 @@ public partial class MainWindow : Window
         });
     }
 
+    // Event handler for the Ask AI menu item
+    private void AskAIMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        // Add code here to open the AskAiWindow
+        AskAiWindow askAiWindow = new AskAiWindow();
+        askAiWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        askAiWindow.Owner = this; // Set the owner to the main window
+        askAiWindow.Show();
+    }
+
     // Start Transcription
     private static bool transcriptionStarted = false;
     private void StartTranscription()
@@ -274,23 +284,27 @@ public partial class MainWindow : Window
                     txtTranscribing.ScrollToEnd();
                 }
             });
-        };     
+        };
 
         // Canceled Handler
         SpeechProcessor.CanceledHandler onCanceled = (message) =>
         {
-            Dispatcher.Invoke(() =>
+            Logger.Log(message);
+            Dispatcher.Invoke(async () =>
             {
                 txtTranscribing.AppendText($"[Canceled]: {message}\n");
                 txtTranscribing.ScrollToEnd();
+
+                await Task.Delay(2000);
+                StartTranscription();
+
             });
         };
 
-
         // Ignore SessionStopped
         SpeechProcessor.SessionStoppedHandler onSessionStopped = (message) =>
-        {
-        };
+            {
+            };
 
         try
         {
@@ -333,19 +347,9 @@ public partial class MainWindow : Window
         transcriptionStarted = false;
     }
 
-    // Event handler for the Ask AI menu item
-    private void AskAIMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        // Add code here to open the AskAiWindow
-        AskAiWindow askAiWindow = new AskAiWindow();
-        askAiWindow.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        askAiWindow.Owner = this; // Set the owner to the main window
-        askAiWindow.ShowDialog(); // Show the AskAiWindow as a dialog
-    }
-
     // Method to get the transcribed text
     public string GetTranscribedText()
-    { 
+    {
         return txtTranscribed.Text;
     }
 }

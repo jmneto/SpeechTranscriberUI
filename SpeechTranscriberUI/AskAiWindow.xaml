@@ -5,7 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SpeechTranscriberUI"
         mc:Ignorable="d"
-        Title="Ask AI" Height="400" Width="500">
+        Title="Ask AI"
+        Height="400"
+        Width="500"
+        MinHeight="400"
+        MinWidth="500"
+        FontSize="14">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>

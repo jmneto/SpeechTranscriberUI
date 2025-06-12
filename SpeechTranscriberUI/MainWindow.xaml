@@ -29,6 +29,9 @@
         <!-- Menu -->
         <Menu Grid.Row="0">
             <MenuItem Header="_File">
+                <MenuItem Header="_Start Transcription" x:Name="StartTranscriptionMenuItem" Click="StartTranscriptionMenuItem_Click"/>
+                <MenuItem Header="S_top Transcription" x:Name="StopTranscriptionMenuItem" Click="StopTranscriptionMenuItem_Click"/>
+                <Separator/>
                 <MenuItem Header="_Copy All" InputGestureText="Ctrl+Shift+C" Click="CopyAllMenuItem_Click"/>
                 <MenuItem Header="_Summarize" Click="SummarizeMenuItem_Click" Name="SummarizeMenuItem"/>
                 <Separator/>

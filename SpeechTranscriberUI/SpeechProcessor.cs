@@ -19,8 +19,9 @@ public class SpeechProcessor
     public delegate void CanceledHandler(string message);
     public delegate void SessionStoppedHandler(string message);
 
-    // TaskCompletionSource to manage task completion
-    private TaskCompletionSource<int> stopAllRecognition = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+    // Per-session stop signals
+    private TaskCompletionSource<int>? micStopTcs;
+    private TaskCompletionSource<int>? speakerStopTcs;
 
     // SpeechConfig instance
     private SpeechConfig? speechConfig = null;
@@ -36,7 +37,8 @@ public class SpeechProcessor
     // Method to stop recognition externally
     public void StopRecognition()
     {
-        stopAllRecognition.TrySetResult(0);
+        micStopTcs?.TrySetResult(0);
+        speakerStopTcs?.TrySetResult(0);
     }
 
     // FromMic method
@@ -48,6 +50,8 @@ public class SpeechProcessor
     {
         if (speechConfig == null)
             throw new InvalidOperationException("SpeechConfig is not initialized.");
+
+        micStopTcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         using (var audioConfig = AudioConfig.FromDefaultMicrophoneInput())
         {
@@ -83,35 +87,27 @@ public class SpeechProcessor
                 // Event handler for cancellation
                 conversationTranscriber.Canceled += (s, e) =>
                 {
-                    string message = $"CANCELED: Reason={e.Reason}";
-                    Logger.Log(message);
-                    onCanceled?.Invoke(message);
+                    string message = $"Mic CANCELED: Reason={e.Reason}";
 
                     if (e.Reason == CancellationReason.Error)
-                    {
-                        Logger.Log($"CANCELED: ErrorCode={e.ErrorCode}");
-                        Logger.Log($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                        onCanceled?.Invoke($"CANCELED: ErrorCode={e.ErrorCode}");
-                        onCanceled?.Invoke($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                        stopAllRecognition.TrySetResult(0);
-                    }
-
-                    stopAllRecognition.TrySetResult(0);
+                        onCanceled?.Invoke($"{message} ErrorCode={e.ErrorCode} ErrorDetails={e.ErrorDetails}");
+                    else
+                        onCanceled?.Invoke(message);
                 };
 
 
                 // Event handler for session stopped
                 conversationTranscriber.SessionStopped += (s, e) =>
                 {
-                    onSessionStopped?.Invoke("Session stopped event.");
-                    stopAllRecognition.TrySetResult(0);
+                    onSessionStopped?.Invoke("Mic Session stopped event.");
+                    micStopTcs?.TrySetResult(0);
                 };
 
                 // Start transcribing
                 await conversationTranscriber.StartTranscribingAsync();
 
                 // Waits for completion. Use Task.WhenAny to keep the task rooted.
-                await Task.WhenAny(stopAllRecognition.Task);
+                await Task.WhenAny(micStopTcs.Task, speakerStopTcs!.Task);
 
                 // Stop transcribing
                 await conversationTranscriber.StopTranscribingAsync();
@@ -128,6 +124,8 @@ public class SpeechProcessor
     {
         if (speechConfig == null)
             throw new InvalidOperationException("SpeechConfig is not initialized.");
+
+        speakerStopTcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         // Memory Stream for communication between NAudio and Azure
         Stream output = new MemoryStream();
@@ -224,24 +222,19 @@ public class SpeechProcessor
         // Event handler for cancellation
         conversationTranscriber.Canceled += (s, e) =>
         {
-            string message = $"CANCELED: Reason={e.Reason}";
-            onCanceled?.Invoke(message);
+            string message = $"Speaker CANCELED: Reason={e.Reason}";
 
             if (e.Reason == CancellationReason.Error)
-            {
-                onCanceled?.Invoke($"CANCELED: ErrorCode={e.ErrorCode}");
-                onCanceled?.Invoke($"CANCELED: ErrorDetails={e.ErrorDetails}");
-                stopAllRecognition.TrySetResult(0);
-            }
-
-            stopAllRecognition.TrySetResult(0);
+                onCanceled?.Invoke($"{message} ErrorCode={e.ErrorCode} ErrorDetails={e.ErrorDetails}");
+            else
+                onCanceled?.Invoke(message);
         };
 
         // Event handler for session stopped
         conversationTranscriber.SessionStopped += (s, e) =>
         {
-            onSessionStopped?.Invoke("Session stopped event.");
-            stopAllRecognition.TrySetResult(0);
+            onSessionStopped?.Invoke("Speaker Session stopped event.");
+            speakerStopTcs?.TrySetResult(0);
         };
 
         // Start transcribing
@@ -250,7 +243,7 @@ public class SpeechProcessor
         capture.StartRecording();
 
         // Waits for completion. Use Task.WhenAny to keep the task rooted.
-        await Task.WhenAny(stopAllRecognition.Task);
+        await Task.WhenAny(speakerStopTcs.Task);
 
         await conversationTranscriber.StopTranscribingAsync();
 

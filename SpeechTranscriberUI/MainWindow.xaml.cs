@@ -4,10 +4,11 @@
 // It includes features such as starting and stopping transcription, copying transcribed text, and summarizing the transcriptions.
 // The application also supports configuration management and maintains the window's last position using the registry.
 
+using SpeechTranscriber;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using SpeechTranscriber;
 
 namespace SpeechTranscriberUI;
 public partial class MainWindow : Window
@@ -29,6 +30,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+
+        // Get version/build number from assembly
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        this.Title = $"SpeechTranscriberUI v{version?.Major}.{version?.Minor}";
 
         // Load the last window position from the registry
         var left = RegistryHelper.ReadAppInfo("WINDOWLEFT");
@@ -68,6 +73,8 @@ public partial class MainWindow : Window
     private void OnFormLoaded(object sender, RoutedEventArgs e)
     {
         StartTranscription();
+
+        UpdateTranscriptionMenuState();
     }
 
     // Event for the form closing
@@ -188,6 +195,30 @@ public partial class MainWindow : Window
         askAiWindow.Show();
     }
 
+    // Menu Item Click Handlers for Start and Stop Transcription
+    private void StartTranscriptionMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        StartTranscription();
+
+        UpdateTranscriptionMenuState();
+    }
+
+    // Menu Item to stop transcription
+    private void StopTranscriptionMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        StopTranscription();
+
+        UpdateTranscriptionMenuState();
+    }
+
+    private void UpdateTranscriptionMenuState()
+    {
+        if (StartTranscriptionMenuItem != null)
+            StartTranscriptionMenuItem.IsEnabled = !transcriptionStarted;
+        if (StopTranscriptionMenuItem != null)
+            StopTranscriptionMenuItem.IsEnabled = transcriptionStarted;
+    }
+
     // Start Transcription
     private static bool transcriptionStarted = false;
     private void StartTranscription()
@@ -289,22 +320,23 @@ public partial class MainWindow : Window
         // Canceled Handler
         SpeechProcessor.CanceledHandler onCanceled = (message) =>
         {
-            Logger.Log(message);
-            Dispatcher.Invoke(async () =>
+            Dispatcher.Invoke(() =>
             {
+                // log the cancellation message
+                Logger.Log(message);
+
                 txtTranscribing.AppendText($"[Canceled]: {message}\n");
                 txtTranscribing.ScrollToEnd();
 
-                await Task.Delay(2000);
-                StartTranscription();
-
+                speechProcessor.StopRecognition();
             });
         };
 
-        // Ignore SessionStopped
+        // SessionStopped Handles
         SpeechProcessor.SessionStoppedHandler onSessionStopped = (message) =>
-            {
-            };
+        {
+            Logger.Log(message);
+        };
 
         try
         {

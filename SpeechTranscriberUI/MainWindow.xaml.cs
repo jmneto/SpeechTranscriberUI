@@ -328,7 +328,7 @@ public partial class MainWindow : Window
                 txtTranscribing.AppendText($"[Canceled]: {message}\n");
                 txtTranscribing.ScrollToEnd();
 
-                speechProcessor.StopRecognition();
+                StopTranscription();
             });
         };
 

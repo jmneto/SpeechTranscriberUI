@@ -1,11 +1,7 @@
 {
   "profiles": {
     "SpeechTranscriberUI": {
-      "commandName": "Project",
-      "environmentVariables": {
-        "SPEECH_KEY": "BsVr8whUV8H5TB5GudTbOXPsQKEOxayH4pTWMvRLAbKbPxs3V62xJQQJ99BBACLArgHXJ3w3AAAYACOGVP2G",
-        "SPEECH_REGION": "southcentralus"
-      }
+      "commandName": "Project"
     }
   }
 }

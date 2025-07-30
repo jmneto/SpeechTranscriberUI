@@ -94,10 +94,6 @@ Contributions are welcome! Please follow these steps:
 
 6. **Submit a Pull Request**: Navigate to the original repository and create a pull request.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for details.
-
 ## Contact
 
 For any questions or suggestions, please [open an issue](https://github.com/jmneto/SpeechTranscriberUI/issues) on GitHub.
